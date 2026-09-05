@@ -3,7 +3,7 @@ use std::{collections::VecDeque, io::Read, result::Result, str::FromStr, sync::M
 use azalea::{
     app::{App, Plugin, Startup, Update},
     ecs::prelude::*,
-    local_player::TabList,
+    local_player::TabListResource,
 };
 use base64::{Engine, prelude::BASE64_STANDARD};
 use serde::{Deserialize, Serialize};
@@ -13,14 +13,14 @@ use uuid::Uuid;
 use crate::prelude::*;
 
 #[derive(Default, Resource)]
-pub struct ApiServer(Option<Server>);
+pub struct HttpApiServer(Option<Server>);
 
 /// Local HTTP API command parsing integration
 pub struct HttpApiParserPlugin;
 
 impl Plugin for HttpApiParserPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ApiServer::default())
+        app.insert_resource(HttpApiServer::default())
             .add_systems(Startup, Self::handle_startup)
             .add_systems(
                 Update,
@@ -34,7 +34,7 @@ impl Plugin for HttpApiParserPlugin {
 }
 
 impl HttpApiParserPlugin {
-    pub fn handle_startup(mut api_server: ResMut<ApiServer>, settings: Res<GlobalSettings>) {
+    pub fn handle_startup(mut api_server: ResMut<HttpApiServer>, settings: Res<GlobalSettings>) {
         match Server::http(settings.http_api.bind_addr.clone()) {
             Ok(server) => {
                 info!("API Server @ {}", server.server_addr());
@@ -51,9 +51,9 @@ impl HttpApiParserPlugin {
     pub fn handle_api_requests(
         mut cmd_events: MessageWriter<CmdEvent>,
         query: Query<Entity>,
-        api_server: ResMut<ApiServer>,
+        api_server: ResMut<HttpApiServer>,
         settings: Res<GlobalSettings>,
-        tab_list: Res<TabList>,
+        tab_list: Res<TabListResource>,
     ) {
         let Some(server) = &api_server.0 else {
             error!("[API] Server not running.");

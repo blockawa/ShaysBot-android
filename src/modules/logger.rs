@@ -5,7 +5,6 @@ use std::{
 
 use azalea::{
     app::{App, Plugin, Update},
-    block::BlockTrait,
     client_chat::ChatReceivedEvent,
     disconnect::DisconnectEvent,
     ecs::prelude::*,
@@ -270,8 +269,8 @@ impl LoggerPlugin {
             let Some(block_state) = block_states.0.get(&packet.pos) else {
                 continue;
             };
-            let block = Box::<dyn BlockTrait>::from(*block_state);
-            if !is_logged_block(&block.id(), None) {
+            let block = block_state.to_trait();
+            if !is_logged_block(block.id(), None) {
                 continue;
             }
 
@@ -311,8 +310,8 @@ impl LoggerPlugin {
                 continue;
             };
 
-            let block = Box::<dyn BlockTrait>::from(packet.block_state);
-            if !is_logged_block(&block.id(), None) {
+            let block = packet.block_state.to_trait();
+            if !is_logged_block(block.id(), None) {
                 continue;
             }
 
@@ -321,15 +320,15 @@ impl LoggerPlugin {
             let content = format!("[{username}] {block_name:?} was placed in visual range.");
 
             let blocks = webhook.get_blocks(EventType::PlayerPlace);
-            if !is_logged_block(&block.id(), blocks.as_deref()) {
+            if !is_logged_block(block.id(), blocks.as_deref()) {
                 continue;
             }
 
             webhook.send_with_block(
                 EventType::PlayerPlace,
                 &content,
-                Some(&block.id()),
-                blocks.as_ref().map(|b| b.as_slice()),
+                Some(block.id()),
+                blocks.as_deref(),
             );
         }
     }
@@ -650,9 +649,7 @@ impl LoggerPlugin {
             if event.idle_goal.coords != Vec3::ZERO {
                 let content = format!(
                     "[{username}] pearl return to idle at ({}, {}, {})",
-                    event.idle_goal.coords.x,
-                    event.idle_goal.coords.y,
-                    event.idle_goal.coords.z
+                    event.idle_goal.coords.x, event.idle_goal.coords.y, event.idle_goal.coords.z
                 );
                 webhook.send(EventType::PearlReturn, content);
             }
@@ -687,7 +684,10 @@ impl LoggerPlugin {
                     error!("Failed to save global settings: {error}");
                 }
 
-                let content = format!("[auto] {uuid} added to whitelist (whitelist_in_range)", uuid = packet.uuid);
+                let content = format!(
+                    "[auto] {uuid} added to whitelist (whitelist_in_range)",
+                    uuid = packet.uuid
+                );
                 webhook.send(EventType::AutoWhitelistAdd, content);
             }
         }

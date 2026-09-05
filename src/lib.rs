@@ -24,21 +24,21 @@ pub mod trackers;
 
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use azalea::{
+    DefaultPlugins,
     app::{PluginGroup, PluginGroupBuilder},
     bot::DefaultBotPlugins,
     ecs::prelude::*,
     pong::PongPlugin,
     prelude::*,
-    swarm::{prelude::*, DefaultSwarmPlugins},
-    DefaultPlugins,
+    swarm::{DefaultSwarmPlugins, prelude::*},
 };
 #[cfg(feature = "via")]
 use azalea_viaversion::ViaVersionPlugin;
+use bevy_discord::DiscordBotPlugin;
 #[cfg(feature = "bot")]
 use bevy_discord::config::DiscordBotConfig;
-use bevy_discord::DiscordBotPlugin;
 use parking_lot::RwLock;
 use semver::Version;
 #[cfg(feature = "bot")]
@@ -122,13 +122,10 @@ pub async fn start() -> Result<()> {
             .gateway_intents(gateway_intents)
             .token(global_settings.discord_token.clone());
 
-        client = client.add_plugins((
-            DiscordBotPlugin::new(configuration),
-            DiscordParserPlugin,
-        ));
+        client = client.add_plugins((DiscordBotPlugin::new(configuration), DiscordParserPlugin));
     }
 
-   /* Logger for distributed rate limits via webhooks */
+    /* Logger for distributed rate limits via webhooks */
     if !global_settings.logger.webhooks.is_empty() {
         client = client.add_plugins(LoggerPlugin);
     }
@@ -145,7 +142,7 @@ pub async fn start() -> Result<()> {
     Ok(())
 }
 
-#[derive(Clone, Component, Resource, SmartDefault)]
+#[derive(Clone, Resource, SmartDefault)]
 pub struct SwarmState {
     auto_reconnect: Arc<RwLock<HashMap<String, (bool, u64)>>>,
 }

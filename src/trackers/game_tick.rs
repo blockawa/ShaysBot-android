@@ -11,12 +11,17 @@ pub struct GameTickPlugin;
 
 impl Plugin for GameTickPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(GameTicks::default())
+        app.insert_resource(GlobalGameTicks::default())
             .add_systems(GameTick, Self::handle_game_ticks);
     }
 }
 
-#[derive(Component, Debug, Default, Deref, DerefMut, Resource)]
+/// Global game ticks counter
+#[derive(Debug, Default, Deref, DerefMut, Resource)]
+pub struct GlobalGameTicks(BoundedCounter<u128>);
+
+/// Per-entity mirror of the global game ticks counter
+#[derive(Debug, Default, Deref, DerefMut, Component)]
 pub struct GameTicks(BoundedCounter<u128>);
 
 type InitQueryData = Entity;
@@ -31,7 +36,7 @@ impl GameTickPlugin {
         mut commands: Commands,
 
         mut run_query: Query<RunQueryData, RunQueryFilter>,
-        mut game_ticks: ResMut<GameTicks>,
+        mut game_ticks: ResMut<GlobalGameTicks>,
     ) {
         for entity in &mut init_query {
             commands.entity(entity).insert(GameTicks::default());

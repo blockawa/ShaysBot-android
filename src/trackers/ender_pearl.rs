@@ -1,9 +1,10 @@
 use azalea::{
+    BlockPos,
+    Vec3,
     app::{App, Plugin, PostUpdate},
-    block::{properties::Open, BlockTrait},
     core::entity_id::MinecraftEntityId,
     ecs::prelude::*,
-    entity::{metadata::Player, Position},
+    entity::{Position, metadata::Player},
     events::packet_listener,
     local_player::WorldHolder,
     packet::game::ReceiveGamePacketEvent,
@@ -11,8 +12,6 @@ use azalea::{
     prelude::*,
     protocol::packets::game::ClientboundGamePacket,
     registry::builtin::EntityKind,
-    BlockPos,
-    Vec3,
 };
 use uuid::Uuid;
 
@@ -157,8 +156,9 @@ impl EnderPearlPlugin {
                 continue;
             };
 
-            if let Some(open) = packet.block_state.property::<Open>()
-                && open
+            let property = packet.block_state.get_property("open");
+            if let Some(open) = property
+                && open == "true"
             {
                 return;
             }
@@ -228,7 +228,7 @@ pub fn find_block_pos(position: Vec3, holder: &WorldHolder, pat: &str) -> Option
             continue;
         };
 
-        if Box::<dyn BlockTrait>::from(state).id().ends_with(pat) {
+        if state.to_trait().id().ends_with(pat) {
             return Some(pos);
         }
     }

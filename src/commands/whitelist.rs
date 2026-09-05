@@ -1,7 +1,7 @@
 use azalea::{
     app::{App, Plugin, Update},
     ecs::prelude::*,
-    local_player::TabList,
+    local_player::TabListResource,
     player::PlayerInfo,
 };
 #[cfg(feature = "bot")]
@@ -41,7 +41,7 @@ impl WhitelistCommandPlugin {
         mut cmd_events: MessageReader<CmdEvent>,
         mut msg_events: MessageWriter<MsgEvent>,
         mut settings: ResMut<GlobalSettings>,
-        tab_list: Res<TabList>,
+        tab_list: Res<TabListResource>,
     ) {
         if let Some(event) = cmd_events.read().next() {
             let Cmds::Whitelist(_plugin) = event.cmd else {
@@ -90,7 +90,7 @@ impl WhitelistCommandPlugin {
 fn handle_add(
     settings: &mut ResMut<GlobalSettings>,
     user: Option<String>,
-    tab_list: &TabList,
+    tab_list: &TabListResource,
 ) -> (u16, String) {
     let Some(player_name) = user else {
         return (404, str!("Missing player name"));
@@ -113,7 +113,7 @@ fn handle_add(
 fn handle_remove(
     settings: &mut ResMut<GlobalSettings>,
     user: Option<String>,
-    tab_list: &TabList,
+    tab_list: &TabListResource,
 ) -> (u16, String) {
     let Some(player_name) = user else {
         return (404, str!("Missing Minecraft player name"));
@@ -250,7 +250,10 @@ fn handle_set(
     }
 }
 
-fn try_find_player<'a>(tab_list: &'a TabList, name: &str) -> Option<(&'a Uuid, &'a PlayerInfo)> {
+fn try_find_player<'a>(
+    tab_list: &'a TabListResource,
+    name: &str,
+) -> Option<(&'a Uuid, &'a PlayerInfo)> {
     tab_list.iter().find(|(_, info)| info.profile.name == name)
 }
 

@@ -17,19 +17,24 @@ pub struct PlayerProfilePlugin;
 
 impl Plugin for PlayerProfilePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(PlayerProfiles::default())
+        app.insert_resource(GlobalPlayerProfiles::default())
             .add_systems(Update, Self::handle_add_entity_packets)
             .add_systems(PostUpdate, Self::handle_remove_entities_packets);
     }
 }
 
-#[derive(Clone, Component, Default, Resource)]
+/// Global player profiles for all entities
+#[derive(Clone, Default, Resource)]
+pub struct GlobalPlayerProfiles(pub HashMap<MinecraftEntityId, GameProfile>);
+
+/// Per-entity local player profiles
+#[derive(Clone, Default, Component)]
 pub struct PlayerProfiles(pub HashMap<MinecraftEntityId, GameProfile>);
 
 impl PlayerProfilePlugin {
     pub fn handle_add_entity_packets(
         mut packet_events: MessageReader<ReceiveGamePacketEvent>,
-        mut player_profiles: ResMut<PlayerProfiles>,
+        mut player_profiles: ResMut<GlobalPlayerProfiles>,
         mut query_profiles: Query<&mut PlayerProfiles>,
         mut commands: Commands,
         query: Query<&TabList>,
@@ -67,7 +72,7 @@ impl PlayerProfilePlugin {
 
     pub fn handle_remove_entities_packets(
         mut packet_events: MessageReader<ReceiveGamePacketEvent>,
-        mut player_profiles: ResMut<PlayerProfiles>,
+        mut player_profiles: ResMut<GlobalPlayerProfiles>,
         mut query: Query<&mut PlayerProfiles>,
     ) {
         for event in packet_events.read() {

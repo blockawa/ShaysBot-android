@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use azalea::{
+    BlockPos,
     app::{App, Plugin, PostUpdate, Update},
     block::BlockState,
     ecs::prelude::*,
     packet::game::ReceiveGamePacketEvent,
     prelude::*,
     protocol::packets::game::ClientboundGamePacket,
-    BlockPos,
 };
 
 /// Tracks block states for trapdoor closes
@@ -15,19 +15,24 @@ pub struct BlockStatePlugin;
 
 impl Plugin for BlockStatePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(BlockStates::default())
+        app.insert_resource(GlobalBlockStates::default())
             .add_systems(Update, Self::handle_block_update_packets)
             .add_systems(PostUpdate, Self::handle_block_break_packets);
     }
 }
 
-#[derive(Clone, Component, Default, Resource)]
+/// Global block states for all entities
+#[derive(Clone, Default, Resource)]
+pub struct GlobalBlockStates(pub HashMap<BlockPos, BlockState>);
+
+/// Per-entity local block states
+#[derive(Clone, Default, Component)]
 pub struct BlockStates(pub HashMap<BlockPos, BlockState>);
 
 impl BlockStatePlugin {
     pub fn handle_block_update_packets(
         mut packet_events: MessageReader<ReceiveGamePacketEvent>,
-        mut block_states: ResMut<BlockStates>,
+        mut block_states: ResMut<GlobalBlockStates>,
         mut query: Query<&mut BlockStates>,
         mut commands: Commands,
     ) {
@@ -52,7 +57,7 @@ impl BlockStatePlugin {
 
     pub fn handle_block_break_packets(
         mut packet_events: MessageReader<ReceiveGamePacketEvent>,
-        mut block_states: ResMut<BlockStates>,
+        mut block_states: ResMut<GlobalBlockStates>,
         mut query: Query<&mut BlockStates>,
     ) {
         for event in packet_events.read() {

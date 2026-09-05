@@ -6,7 +6,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use azalea::{
     app::{App, Plugin},
     prelude::*,
@@ -73,7 +73,7 @@ pub struct GlobalSettings {
     /// API Server for local integrations.
     #[cfg(feature = "api")]
     #[serde(rename = "api_server")]
-    pub http_api: ApiServer,
+    pub http_api: HttpApiConfig,
 
     /// Chat encryption using the NCR (No Chat Reports) mod.
     #[serde(rename = "chat_encryption")]
@@ -85,7 +85,7 @@ pub struct GlobalSettings {
 
 #[derive(Clone, Eq, PartialEq, Deserialize, Serialize, SmartDefault)]
 #[serde(default)]
-pub struct ApiServer {
+pub struct HttpApiConfig {
     #[default(false)]
     pub enabled: bool,
 
@@ -242,7 +242,9 @@ pub const DEFAULT_BLOCK_FILTER: &[&str] = &[
 pub fn is_logged_block(block_id: &str, custom_blocks: Option<&[String]>) -> bool {
     match custom_blocks {
         Some(list) => list.iter().any(|filter| block_id.contains(filter.as_str())),
-        None => DEFAULT_BLOCK_FILTER.iter().any(|filter| block_id.contains(*filter)),
+        None => DEFAULT_BLOCK_FILTER
+            .iter()
+            .any(|filter| block_id.contains(*filter)),
     }
 }
 

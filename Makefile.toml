@@ -1,9 +1,9 @@
-[tasks.build-aarch64]
-command = "cross"
-args = ["build", "--release", "--target", "aarch64-unknown-linux-gnu"]
+[tasks.upload-server-cloudstation]
+dependencies = ["build-server-aarch64"]
+workspace = false
+script = "scp target/aarch64-unknown-linux-gnu/release/shaysbot devs@cloudstation:/home/devs/.cargo/bin/shaysbot-temp"
 
-[tasks.upload-vps]
-dependencies = ["build-aarch64"]
-script = '''
-scp target/aarch64-unknown-linux-gnu/release/shaysbot devs@vps:/home/devs/.cargo/bin/shaysbot
-'''
+[tasks.build-server-aarch64]
+workspace = false
+command = "cargo"
+args = ["cross", "build", "--profile", "release", "--target", "aarch64-unknown-linux-gnu"]
