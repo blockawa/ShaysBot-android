@@ -27,11 +27,11 @@ jobs:
       matrix:
         include:
           # Termux 主流设备（绝大多数手机）
-          - name: Android-aarch64
+          - name: Android-arm64-v8a
             target: aarch64-linux-android
             toolchain: aarch64-linux-android
             linker_env: CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER
-            binary: shaysbot-android-aarch64
+            binary: shaysbot-android-arm64-v8a
 
           # 注：armv7（32 位）无法构建——依赖 simdnbt 仅支持 64 位平台
 
