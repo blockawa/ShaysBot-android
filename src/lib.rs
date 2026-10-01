@@ -24,7 +24,7 @@ pub mod trackers;
 
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use azalea::{
     DefaultPlugins,
     app::{PluginGroup, PluginGroupBuilder},
@@ -40,44 +40,11 @@ use bevy_discord::DiscordBotPlugin;
 #[cfg(feature = "bot")]
 use bevy_discord::config::DiscordBotConfig;
 use parking_lot::RwLock;
-use semver::Version;
 #[cfg(feature = "bot")]
 use serenity::prelude::*;
 use smart_default::SmartDefault;
-use terminal_link::Link;
-use ureq::ResponseExt;
 
 use crate::prelude::*;
-
-pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const CARGO_PKG_HOMEPAGE: &str = env!("CARGO_PKG_HOMEPAGE");
-pub const CARGO_PKG_REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
-
-/// # Get the remote version using GitHub's latest release link redirect
-///
-/// # Errors
-/// Will return `Err` if `ureq::get` fails.
-pub fn get_remote_version() -> Result<Version> {
-    let response = ureq::get(CARGO_PKG_HOMEPAGE).call()?;
-
-    let url = response.get_uri().to_string();
-    if let Some(remote_version) = url.split('/').next_back() {
-        return Ok(remote_version.parse()?);
-    }
-
-    bail!("Failed to get the remote version")
-}
-
-/// # Check for updates using GitHub's latest release link redirect
-///
-/// # Errors
-/// Will return `Err` if `ureq::get` fails.
-pub fn check_for_updates() -> Result<bool> {
-    let local_version = CARGO_PKG_VERSION.parse()?;
-    let remote_version = get_remote_version()?;
-
-    Ok(remote_version > local_version)
-}
 
 /// # Create and start the Minecraft bot client
 ///
@@ -101,14 +68,6 @@ pub async fn start() -> Result<()> {
             SettingsPluginGroup,
             TrackersPluginGroup,
         ));
-
-    /* Check for updates after loading files to reduce web request spam */
-    if check_for_updates()? {
-        let version = get_remote_version()?;
-        let text = format!("An update is available: {CARGO_PKG_REPOSITORY}/releases/tag/{version}");
-        let link = Link::new(&text, CARGO_PKG_HOMEPAGE);
-        info!("{link}");
-    }
 
     #[cfg(feature = "api")]
     if global_settings.http_api.enabled {
