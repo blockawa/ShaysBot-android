@@ -16,6 +16,10 @@ azalea = { git = "https://github.com/Shays-Forks/azalea" }
 
 [patch.crates-io]
 ncr = { git = "https://github.com/Shays-Forks/ncr-rs", rev = "4004292" }
+# Android/Termux 适配：无 JVM 环境下 DNS 改为返回 Err（走 azalea 的 Google DNS
+# fallback）、TLS 改为 webpki 静态根证书验证，避免 ndk-context/JNI panic。
+hickory-resolver = { path = "vendor/hickory-resolver" }
+rustls-platform-verifier = { path = "vendor/rustls-platform-verifier" }
 
 [dependencies]
 anyhow = "1"
@@ -32,7 +36,6 @@ itertools = "0.14"
 lazy-regex = "3"
 ncr = { version = "0.1", features = ["cfb8", "ecb", "gcm"] }
 parking_lot = "0.12"
-semver = "1"
 serde = "1"
 serde_tuple = "1"
 serde_with = "3"
@@ -41,7 +44,6 @@ serenity = { version = "0.12", optional = true }
 smart-default = "0.7"
 str-macro = "1"
 strum = { version = "0.28", features = ["derive"] }
-terminal-link = "0.1"
 tiny_http = { version = "0.12", optional = true }
 tokio = { version = "1", features = ["full"] }
 toml = "1"

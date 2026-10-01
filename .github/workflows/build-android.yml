@@ -86,9 +86,11 @@ jobs:
         with:
           shared-key: android-${{ matrix.target }}
 
-      # release 构建，--locked 锁定 Cargo.lock 保证可复现
+      # release 构建。不加 --locked：本仓库通过 [patch.crates-io] 引入了
+      # vendor 本地补丁（DNS/TLS 的 Termux 适配），Cargo.lock 需由 cargo
+      # 自动补全这些条目；其余依赖仍按现有 Cargo.lock 锁定。
       - name: Build Release Binary
-        run: cargo build --release --locked --target "${{ matrix.target }}"
+        run: cargo build --release --target "${{ matrix.target }}"
 
       - name: Strip and Rename Binary
         run: |
