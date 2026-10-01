@@ -33,12 +33,7 @@ jobs:
             linker_env: CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER
             binary: shaysbot-android-aarch64
 
-          # 32 位 ARM 设备
-          - name: Android-armv7
-            target: armv7-linux-androideabi
-            toolchain: armv7a-linux-androideabi
-            linker_env: CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER
-            binary: shaysbot-android-armv7
+          # 注：armv7（32 位）无法构建——依赖 simdnbt 仅支持 64 位平台
 
           # x86_64 模拟器 / 个别设备
           - name: Android-x86_64
