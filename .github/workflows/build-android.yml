@@ -1,0 +1,113 @@
+name: Build Android binaries
+
+# 触发方式：手动触发（workflow_dispatch）+ 每次提交自动构建（push）
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同一分支的连续提交只保留最新一次构建
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # 最低 Android API 级别：24 = Android 7.0（Termux 的最低要求）
+  ANDROID_API: "24"
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Termux 主流设备（绝大多数手机）
+          - name: Android-aarch64
+            target: aarch64-linux-android
+            toolchain: aarch64-linux-android
+            linker_env: CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER
+            binary: shaysbot-android-aarch64
+
+          # 32 位 ARM 设备
+          - name: Android-armv7
+            target: armv7-linux-androideabi
+            toolchain: armv7a-linux-androideabi
+            linker_env: CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER
+            binary: shaysbot-android-armv7
+
+          # x86_64 模拟器 / 个别设备
+          - name: Android-x86_64
+            target: x86_64-linux-android
+            toolchain: x86_64-linux-android
+            linker_env: CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER
+            binary: shaysbot-android-x86_64
+
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+
+      # 固定 NDK 版本，保证构建可复现（与已验证可运行的产物一致）
+      - name: Install Android NDK
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+
+      # 按项目 rust-toolchain.toml 安装固定的 nightly 工具链及目标平台标准库
+      - name: Install Rust Toolchain
+        run: |
+          TOOLCHAIN="$(sed -n 's/^channel *= *"\([^"]*\)".*/\1/p' rust-toolchain.toml)"
+          echo "Installing Rust toolchain: ${TOOLCHAIN}"
+          rustup toolchain install "${TOOLCHAIN}" --profile minimal
+          rustup target add --toolchain "${TOOLCHAIN}" "${{ matrix.target }}"
+
+      # 配置 NDK 交叉编译工具链：
+      # - CC_/CXX_/AR_/RANLIB_ 供 cc crate（ring、aws-lc-sys 等 C 依赖）使用
+      # - CARGO_TARGET_*_LINKER 供 rustc 链接最终二进制
+      - name: Configure Android Toolchain
+        run: |
+          NDK_BIN="${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          CLANG="${NDK_BIN}/${{ matrix.toolchain }}${ANDROID_API}-clang"
+          CLANGXX="${NDK_BIN}/${{ matrix.toolchain }}${ANDROID_API}-clang++"
+          {
+            echo "CC_${{ matrix.target }}=${CLANG}"
+            echo "CXX_${{ matrix.target }}=${CLANGXX}"
+            echo "AR_${{ matrix.target }}=${NDK_BIN}/llvm-ar"
+            echo "RANLIB_${{ matrix.target }}=${NDK_BIN}/llvm-ranlib"
+            echo "${{ matrix.linker_env }}=${CLANG}"
+            echo "ANDROID_NDK_HOME=${{ steps.ndk.outputs.ndk-path }}"
+            echo "ANDROID_NDK_ROOT=${{ steps.ndk.outputs.ndk-path }}"
+          } >> "${GITHUB_ENV}"
+          "${CLANG}" --version
+
+      # 缓存编译产物，加速后续提交的构建
+      - name: Cache Rust Build
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: android-${{ matrix.target }}
+
+      # release 构建，--locked 锁定 Cargo.lock 保证可复现
+      - name: Build Release Binary
+        run: cargo build --release --locked --target "${{ matrix.target }}"
+
+      - name: Strip and Rename Binary
+        run: |
+          NDK_BIN="${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          BIN="target/${{ matrix.target }}/release/shaysbot"
+          "${NDK_BIN}/llvm-strip" "${BIN}"
+          mv "${BIN}" "${{ matrix.binary }}"
+          file "${{ matrix.binary }}"
+          ls -lh "${{ matrix.binary }}"
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary }}
+          path: ${{ matrix.binary }}
+          if-no-files-found: error
+          retention-days: 30
