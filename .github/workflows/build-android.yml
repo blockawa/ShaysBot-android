@@ -4,6 +4,11 @@ name: Build Android binaries
 on:
   push:
   workflow_dispatch:
+    inputs:
+      strip:
+        description: "Strip symbols from the binary (disable for debugging panics)"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -92,11 +97,14 @@ jobs:
       - name: Build Release Binary
         run: cargo build --release --target "${{ matrix.target }}"
 
+      # push 构建总是 strip；手动触发可传 strip=false 保留符号用于定位 panic
       - name: Strip and Rename Binary
         run: |
           NDK_BIN="${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
           BIN="target/${{ matrix.target }}/release/shaysbot"
-          "${NDK_BIN}/llvm-strip" "${BIN}"
+          if [ "${{ github.event_name == 'push' || inputs.strip }}" = "true" ]; then
+            "${NDK_BIN}/llvm-strip" "${BIN}"
+          fi
           mv "${BIN}" "${{ matrix.binary }}"
           file "${{ matrix.binary }}"
           ls -lh "${{ matrix.binary }}"
