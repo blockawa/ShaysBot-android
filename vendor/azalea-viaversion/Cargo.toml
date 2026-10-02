@@ -16,7 +16,6 @@ azalea = { git = "https://github.com/azalea-rs/azalea", default-features = false
 futures-util = "0.3"
 kdam = "0.6"
 lazy-regex = "3.6"
-minecraft_folder_path = "0.1"
 reqwest = { version = "0.13.4", default-features = false, features = [
   "rustls",
   "stream",

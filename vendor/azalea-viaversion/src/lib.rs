@@ -127,14 +127,10 @@ impl ViaVersionPlugin {
             );
         };
 
-        // 数据目录跟随二进制所在目录（<exe_dir>/.minecraft），
-        // 仅在拿不到可执行文件路径时才回退到平台默认的 $HOME/.minecraft
-        let mc_path = std::env::current_exe()
-            .ok()
-            .and_then(|exe| exe.parent().map(|dir| dir.to_path_buf()))
-            .map(|dir| dir.join(".minecraft"))
-            .or_else(minecraft_folder_path::minecraft_dir)
-            .expect("Unsupported Platform");
+        // 数据目录直接生成在当前工作目录的 .minecraft 下
+        let mc_path = std::env::current_dir()
+            .expect("Unsupported Platform")
+            .join(".minecraft");
 
         #[rustfmt::skip]
         let via_proxy_ext = if java_version.major < 17 { "+java8.jar" } else { ".jar" };
