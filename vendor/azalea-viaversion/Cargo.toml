@@ -1,0 +1,26 @@
+[package]
+name = "azalea-viaversion"
+version = "0.1.0"
+edition = "2024"
+repository = "https://github.com/azalea-rs/azalea-viaversion"
+
+[dev-dependencies]
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dependencies]
+anyhow = "1.0"
+async-compat = "0.2.5"
+azalea = { git = "https://github.com/azalea-rs/azalea", default-features = false, features = [
+  "online-mode",
+] }
+futures-util = "0.3"
+kdam = "0.6"
+lazy-regex = "3.6"
+minecraft_folder_path = "0.1"
+reqwest = { version = "0.13.4", default-features = false, features = [
+  "rustls",
+  "stream",
+] }
+semver = "1.0"
+tokio = { version = "1.52.3", features = ["process"] }
+tracing = "0.1"

@@ -19,6 +19,10 @@ azalea = { git = "https://github.com/Shays-Forks/azalea" }
 [patch.'https://github.com/Shays-Forks/azalea']
 azalea-chat = { path = "vendor/azalea-chat" }
 
+# ViaProxy 下载目录跟随二进制（原为 $HOME/.minecraft/azalea-viaversion）
+[patch.'https://github.com/azalea-rs/azalea-viaversion']
+azalea-viaversion = { path = "vendor/azalea-viaversion" }
+
 [patch.crates-io]
 ncr = { git = "https://github.com/Shays-Forks/ncr-rs", rev = "4004292" }
 # Android/Termux 适配：无 JVM 环境下 DNS 改为返回 Err（走 azalea 的 Google DNS
