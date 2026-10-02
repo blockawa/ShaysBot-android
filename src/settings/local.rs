@@ -10,7 +10,7 @@ use azalea::{
     JoinOpts,
     NoState,
     Vec3,
-    account::MicrosoftAccountOpts,
+    account::microsoft::MicrosoftAccountOpts,
     app::{App, Plugin, Startup},
     ecs::prelude::*,
     prelude::*,
