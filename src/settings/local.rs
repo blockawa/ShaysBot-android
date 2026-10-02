@@ -10,6 +10,7 @@ use azalea::{
     JoinOpts,
     NoState,
     Vec3,
+    account::MicrosoftAccountOpts,
     app::{App, Plugin, Startup},
     ecs::prelude::*,
     prelude::*,
@@ -295,7 +296,23 @@ pub async fn load_settings(swarm: Swarm) -> Result<()> {
         let settings = LocalSettings::new(&username)?.load()?.save()?;
         let account = match settings.auth_mode {
             AuthMode::Offline => Account::offline(&username),
-            AuthMode::Online => Account::microsoft(&username).await?,
+            AuthMode::Online => {
+                // 认证缓存放在二进制所在目录的 .minecraft/ 下（而非 $HOME/.minecraft），
+                // 无论从哪个工作目录启动都固定在可执行文件旁边
+                let exe_dir = std::env::current_exe()
+                    .context("Failed to get current executable path")?
+                    .parent()
+                    .map(|p| p.to_path_buf())
+                    .context("Failed to get executable directory")?;
+                let cache_dir = exe_dir.join(".minecraft");
+                std::fs::create_dir_all(&cache_dir)
+                    .context("Failed to create .minecraft directory")?;
+                let opts = MicrosoftAccountOpts {
+                    cache_file: Some(cache_dir.join("azalea-auth.json")),
+                    ..Default::default()
+                };
+                Account::microsoft_with_opts(&username, opts).await?
+            }
         };
 
         tokio::time::sleep(Duration::from_secs(5)).await;
