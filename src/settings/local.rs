@@ -297,14 +297,11 @@ pub async fn load_settings(swarm: Swarm) -> Result<()> {
         let account = match settings.auth_mode {
             AuthMode::Offline => Account::offline(&username),
             AuthMode::Online => {
-                // 认证缓存放在二进制所在目录的 .minecraft/ 下（而非 $HOME/.minecraft），
-                // 无论从哪个工作目录启动都固定在可执行文件旁边
-                let exe_dir = std::env::current_exe()
-                    .context("Failed to get current executable path")?
-                    .parent()
-                    .map(|p| p.to_path_buf())
-                    .context("Failed to get executable directory")?;
-                let cache_dir = exe_dir.join(".minecraft");
+                // 认证缓存放在当前工作目录的 .minecraft/ 下
+                // （与 LocalSettings::path() 的 release 分支同逻辑）
+                let cache_dir = std::env::current_dir()
+                    .context("Failed to get current directory")?
+                    .join(".minecraft");
                 std::fs::create_dir_all(&cache_dir)
                     .context("Failed to create .minecraft directory")?;
                 let opts = MicrosoftAccountOpts {
