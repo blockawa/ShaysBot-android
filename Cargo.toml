@@ -14,6 +14,11 @@ license = "MIT"
 azalea = { git = "https://github.com/Shays-Forks/azalea" }
 #azalea = { path = "../azalea/azalea" }
 
+# chat 组件解析容错化：26.x 新组件（player/score 等未知结构）降级为空文本
+# 而非返回 None，避免 system_chat/set_action_bar_text 整包被丢弃
+[patch.'https://github.com/Shays-Forks/azalea']
+azalea-chat = { path = "vendor/azalea-chat" }
+
 [patch.crates-io]
 ncr = { git = "https://github.com/Shays-Forks/ncr-rs", rev = "4004292" }
 # Android/Termux 适配：无 JVM 环境下 DNS 改为返回 Err（走 azalea 的 Google DNS
