@@ -20,6 +20,9 @@ ncr = { git = "https://github.com/Shays-Forks/ncr-rs", rev = "4004292" }
 # fallback）、TLS 改为 webpki 静态根证书验证，避免 ndk-context/JNI panic。
 hickory-resolver = { path = "vendor/hickory-resolver" }
 rustls-platform-verifier = { path = "vendor/rustls-platform-verifier" }
+# aarch64 指针标签（MTE/TBI）导致 NBT 解析错位 panic，应用上游未发布的修复
+# （azalea-rs/simdnbt#25: strip pointer tags in Reader::new on aarch64）
+simdnbt = { path = "vendor/simdnbt" }
 
 [dependencies]
 anyhow = "1"
