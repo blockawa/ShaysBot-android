@@ -6,7 +6,7 @@ use azalea::{
     packet::game::SendGamePacketEvent,
     prelude::*,
     protocol::packets::game::{ServerboundClientInformation, ServerboundGamePacket},
-    ClientInformation,
+    ClientInformation, InGameState,
 };
 
 use crate::prelude::*;
@@ -34,10 +34,24 @@ impl AntiAfkPlugin {
     }
 
     pub fn handle_anti_afk(
-        mut query: Query<(Entity, &LocalSettings, &GameTicks, &mut ClientInformation)>,
+        mut query: Query<(
+            Entity,
+            &LocalSettings,
+            &GameTicks,
+            &mut ClientInformation,
+            Option<&InGameState>,
+        )>,
         mut commands: Commands,
     ) {
-        for (entity, local_settings, game_ticks, mut client_information) in &mut query {
+        for (entity, local_settings, game_ticks, mut client_information, in_game_state) in
+            &mut query
+        {
+            // 仍在 config 阶段（未插入 InGameState）时跳过，
+            // 避免 "Tried to send a game packet ... while not in game state"
+            if in_game_state.is_none() {
+                continue;
+            }
+
             if !local_settings.anti_afk.enabled {
                 continue;
             }
