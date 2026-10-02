@@ -937,7 +937,7 @@ impl RequestLimits {
     fn try_charge_query(&self, query: &Query) -> Result<(), RecursorError> {
         if self
             .req_query_count
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| {
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |n| {
                 (n < MAX_QUERIES_PER_REQUEST).then(|| n + 1)
             })
             .is_err()

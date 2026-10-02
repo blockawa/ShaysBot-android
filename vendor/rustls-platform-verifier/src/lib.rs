@@ -16,10 +16,6 @@ pub use verification::Verifier;
 // Build the Android module when generating docs so that
 // the Android-specific functions are included regardless of
 // the host.
-#[cfg(any(all(doc, docsrs), target_os = "android"))]
-#[cfg_attr(docsrs, doc(cfg(target_os = "android")))]
-pub mod android;
-
 /// Fixures and data to support testing the server
 /// certificate verifier.
 #[cfg(any(test, feature = "ffi-testing"))]
